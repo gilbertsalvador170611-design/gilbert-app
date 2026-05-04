@@ -1,0 +1,8 @@
+{
+  "name": "AdRewards Pro",
+  "description": "Premium ad-monetization platform by com.adrewards.ph with strict admin controls, fraud detection, and TikTok-style ad feed.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": []
+}

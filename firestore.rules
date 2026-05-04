@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.email == 'bertsalvador227@gmail.com'; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.walletBalance == 0
+        && request.resource.data.fraudScore == 0
+        && request.resource.data.faceVerified == true
+        && request.resource.data.deviceId is string
+        // Enforce device registration in the same batch
+        && existsAfter(/databases/$(database)/documents/device_ids/$(request.resource.data.deviceId));
+
+      allow update: if isAdmin() || (
+        isOwner(userId) 
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'school', 'age', 'updatedAt'])
+        && resource.data.status == 'pending'
+      );
+    }
+
+    // Device IDs Collection (Mapping)
+    match /device_ids/{deviceId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && !exists(/databases/$(database)/documents/device_ids/$(deviceId));
+    }
+
+    // Withdrawals Collection
+    match /withdrawals/{withdrawalId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.userId); 
+      
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.fullName is string && request.resource.data.fullName.size() > 0
+        && request.resource.data.phone is string && request.resource.data.phone.matches('^\\+63[0-9]{10}$')
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+
+      allow update: if isAdmin() 
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'processedAt'])
+        && (
+          request.resource.data.status == 'rejected' || 
+          (request.resource.data.status == 'approved' && request.time >= resource.data.requestedAt + duration.value(1, 'h'))
+        );
+    }
+
+    // Transactions Collection
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+    }
+  }
+}

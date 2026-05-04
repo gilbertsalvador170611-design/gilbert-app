@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() { return request.auth != null; }
+    function isAdmin() { return isSignedIn() && request.auth.token.email == 'bertsalvador227@gmail.com'; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      
+      allow create: if isSignedIn() 
+        && request.auth.uid == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.walletBalance == 0
+        && request.resource.data.fraudScore == 0;
+
+      allow update: if isAdmin() || (
+        isOwner(userId) 
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'phone', 'school', 'age', 'updatedAt'])
+        && resource.data.status == 'pending' // Users can only edit profile while pending? Or anytime?
+      );
+    }
+
+    // Withdrawals Collection
+    match /withdrawals/{withdrawalId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (isSignedIn() && request.query.limit <= 100 && request.auth.uid == resource.data.userId); // This query enforcement is tricky for lists
+      
+      allow create: if isSignedIn() 
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'active';
+
+      allow update: if isAdmin() 
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'processedAt']);
+    }
+
+    // Transactions Collection
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAdmin(); // Transactions should only be created by system/admin logic? 
+      // Actually, ad reward might be client-triggered but needs backend verification.
+      // For now, I'll allow system writes (which bypass rules) or admin writes.
+    }
+  }
+}

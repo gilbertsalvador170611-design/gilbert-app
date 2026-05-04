@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and status",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "school": { "type": "string" },
+        "age": { "type": "number" },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "active", "rejected", "suspended"]
+        },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "walletBalance": { "type": "number" },
+        "fraudScore": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "faceVerified": { "type": "boolean" },
+        "faceId": { "type": "string" },
+        "deviceId": { "type": "string" },
+        "deviceInfo": {
+          "type": "object",
+          "properties": {
+            "os": { "type": "string" },
+            "browser": { "type": "string" },
+            "ip": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "status", "role"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "User withdrawal request",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "method": { "type": "string", "enum": ["GCash", "Maya", "PayPal"] },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "requestedAt": { "type": "string", "format": "date-time" },
+        "processedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "fullName", "phone", "method", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "History of earnings and withdrawals",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "type": { "type": "string", "enum": ["earning", "withdrawal"] },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "type"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Collection of user profiles"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "Withdrawal",
+      "description": "Collection of withdrawal requests"
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Collection of financial transactions"
+    },
+    "/device_ids/{deviceId}": {
+      "schema": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" }
+        }
+      },
+      "description": "Mapping of device fingerprints to user IDs to enforce one account per device"
+    }
+  }
+}
