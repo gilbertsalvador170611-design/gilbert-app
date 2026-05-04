@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "577884155021",
+    "project_id": "gen-lang-client-0778772305",
+    "storage_bucket": "gen-lang-client-0778772305.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577884155021:android:f2fd4b38f527e66446c6c4",
+        "android_client_info": {
+          "package_name": "com.adrewards.ph"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "577884155021-d1l9416tfm28lt8qilor44e1qg1ho6gu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDe3WsmlKCZ6P-OKjZxtIJMToyE8aWzTUA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "577884155021-d1l9416tfm28lt8qilor44e1qg1ho6gu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
