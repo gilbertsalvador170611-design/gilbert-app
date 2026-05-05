@@ -1,0 +1,20 @@
+workflows:
+  android-workflow:
+    name: Android Build
+
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm install
+
+      - name: Fix gradle permission
+        script: |
+          chmod +x android/gradlew
+
+      - name: Build APK
+        script: |
+          cd android
+          ./gradlew assembleRelease
+
+    artifacts:
+      - android/app/build/outputs/**/*.apk
